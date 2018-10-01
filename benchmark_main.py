@@ -167,22 +167,15 @@ def main():
 
     print("~~epoch\thours\ttop1Accuracy\n")
     start_time = datetime.now()
-    #args.distributed = args.world_size > 1
     if args.distributed:
         os.environ['WORLD_SIZE'] = str(args.world_size)
-        dist.init_process_group(backend=args.dist_backend, init_method = args.dist_url, world_size = args.world_size, rank = int(os.environ['RANK'])) #rank = args.local_rank, world_size = args.world_size
-        #dist.init_process_group(backend=args.dist_backend, init_method = args.dist_url)
+        dist.init_process_group(backend=args.dist_backend, init_method = args.dist_url, world_size = args.world_size, rank = int(os.environ['RANK']))
         torch.cuda.set_device(args.local_rank)
-
-        #add torch.seed custom
-        #torch.manual_seed(args.seed)
-        #torch.cuda.manual_seed(args.seed)
 
         if dist.get_rank() == 0:
             print(str(dist.get_world_size()) + ' number of workers is set up!')
 
     if dist.get_rank() == 0:
-        #Just take PS model to be same at each time, for experiment
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed(args.seed)
 
@@ -203,9 +196,6 @@ def main():
 
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
-
-    #intial LR adjustment
-    #args.lr =  dist.get_world_size() * args.lr
 
     optimizer = Signum_SGD.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce)
 
@@ -257,7 +247,6 @@ def main():
 
 
 
-# item() is a recent addition, so this helps with backward compatibility.
 def to_python_float(t):
     if hasattr(t, 'item'):
         return t.item()
