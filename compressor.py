@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import torch
+import bit2byte
 from torch.utils.cpp_extension import load
 import time
 
+
 class compressor:
     def __init__(self, using_cuda = False, local_rank = 0):
-        self.bit2byte = load(name="bit2byte", sources=["bit2byte.cpp"], verbose=True)
+        #bit2byte = load(name="bit2byte", sources=["bit2byte.cpp"], verbose=True)
         self.using_cuda = using_cuda
         self.local_rank = local_rank
         if using_cuda:            
@@ -14,6 +16,8 @@ class compressor:
             self.device = torch.device('cpu')
 
     def packing(self, src_tensor):
+        src_tensor = torch.sign(src_tensor)
+        src_tensor_size = src_tensor.size()
         src_tensor = src_tensor.view(-1)
         src_len = len(src_tensor)
         add_elm = 32 - (src_len % 32)
@@ -23,9 +27,9 @@ class compressor:
         src_tensor = torch.cat((src_tensor, new_tensor), 0)
         src_tensor = src_tensor.view(32,-1)
         src_tensor = src_tensor.to(dtype=torch.int32)
-        dst_tensor = self.bit2byte.packing(src_tensor)
-
-        return dst_tensor, src_tensor.size()
+        dst_tensor = bit2byte.packing(src_tensor)
+        dst_tensor = dst_tensor.to(dtype=torch.int32)
+        return dst_tensor, src_tensor_size
 
     def unpacking(self, src_tensor, src_tensor_size):
         src_element_num = self.element_num(src_tensor_size)
@@ -35,10 +39,32 @@ class compressor:
         src_tensor = src_tensor.int()
         new_tensor = torch.ones(src_element_num + add_elm, device=self.device, dtype=torch.int32)
         new_tensor = new_tensor.view(32,-1)
-        new_tensor = self.bit2byte.unpacking(src_tensor,new_tensor)
+        new_tensor = bit2byte.unpacking(src_tensor,new_tensor)
         new_tensor = new_tensor.view(-1)
         new_tensor = new_tensor[:src_element_num]
-        return new_tensor.view(src_tensor_size)
+        new_tensor = new_tensor.view(src_tensor_size)
+        new_tensor = - new_tensor.add_(-1)
+        new_tensor = new_tensor.float()
+        return new_tensor
+
+    def majority_vote(self, src_tensor_list):
+        voter_num = len(src_tensor_list)
+        src_tensor = torch.stack(src_tensor_list)
+        src_tensor = src_tensor.view(-1)
+        full_size = 32 * len(src_tensor)
+        new_tensor = torch.ones(full_size, device=self.device, dtype=torch.int32)
+        new_tensor = new_tensor.view(32,-1)
+        new_tensor = bit2byte.unpacking(src_tensor,new_tensor)
+        new_tensor = - new_tensor.add_(-1)
+        #sum
+        new_tensor = new_tensor.permute(1,0).contiguous().view(voter_num,-1)
+        new_tensor = torch.sum(new_tensor,0)
+        new_tensor = new_tensor.view(-1,32).permute(1,0)
+        new_tensor = torch.sign(new_tensor)
+        new_tensor = bit2byte.packing(new_tensor)
+        new_tensor = new_tensor.to(dtype=torch.int32)
+        return new_tensor
+
 
     def element_num(self, size):
         num = 1
@@ -48,13 +74,10 @@ class compressor:
 
 
     def compress(self, src_tensor):
-        src_tensor = torch.sign(src_tensor)
         return self.packing(src_tensor)
 
     def uncompress(self, src_tensor, src_tensor_size):
         dst_tensor = self.unpacking(src_tensor,src_tensor_size)
-        dst_tensor = - dst_tensor.add_(-1)
-        dst_tensor = dst_tensor.float()
         return dst_tensor
 
 
