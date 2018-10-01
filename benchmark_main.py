@@ -161,29 +161,7 @@ def get_loaders(traindir, valdir, use_val_sampler=False, min_scale=0.08, Data_au
 
 def main():
 
-    #mamual debugging
-    args.signum = False
-
     args.split_data = False
-
-    if args.signum:
-        args.dist_backend = 'gloo'
-        args.compress = True   
-        args.all_reduce = False
-    else:
-        args.dist_backend = 'nccl'
-        args.compress = False   
-        args.all_reduce = True  
-
-    #fix all hyperparameter:
-    if args.signum:
-        args.weight_decay = 0.1
-        args.lr = 0.0007
-        args.momentum = 0.9
-    else:
-        args.weight_decay = 0.0001
-        args.lr = 0.1
-        args.momentum = 0.9
 
     args.distributed = True
 
