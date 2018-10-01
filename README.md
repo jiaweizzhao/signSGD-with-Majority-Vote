@@ -2,7 +2,8 @@
 
 This repository contains the code used for paper:
 + [signSGD with Majority Vote is Commnunication Efficient and Byzantine Fault Tolerant](https://openreview.net/forum?id=BJxhijAcY7)
-+ This code was originally forked from the [End to end ImageNet training](https://github.com/fastai/imagenet-fast).
+
+This code was originally forked from the [End to end ImageNet training](https://github.com/fastai/imagenet-fast).
 
 ## Experiments
 **Note:** This is a pre-release version, only supporting to launch AWS p3.2x instance from our AMI.
