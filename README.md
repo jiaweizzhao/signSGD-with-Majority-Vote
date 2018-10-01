@@ -6,7 +6,7 @@ This repository contains the code used for paper:
 This code was originally forked from the [End to end ImageNet training](https://github.com/fastai/imagenet-fast).
 
 ## Experiments
-**Note:** This is a pre-release version, only supporting to launch AWS p3.2x instance from our AMI.
+**Note:** This is a pre-release version, only supporting to launch AWS p3.2x instances from our AMI.
 
 AMI ID: ami-087c759ad06074f21
 
