@@ -6,12 +6,21 @@ This repository contains the code used for paper:
 This code was originally forked from the [End to end ImageNet training](https://github.com/fastai/imagenet-fast).
 
 ## Experiments
-**Note:** This is a pre-release version, only supporting to launch AWS p3.2x instances from our AMI.
 
-AMI ID: ami-087c759ad06074f21
+### Downloading ImageNet
+1. Run pre-scripts/download_kaggle_imagenet.sh to download the ImageNet dataset
+2. Run pre-scripts/imagenet_formatting.sh to preprocess the images
+
+### C++ extension installation 
+1. Put the folder 'bit2byte-extension' to the directory of PyTorch source code
+2. Execute this command on the directory of 'bit2byte-extension' 
+
+`python setup.py install`
+
+You can find more information about C++ extension in [PyTorch documentation](https://pytorch.org/tutorials/advanced/cpp_extension.html#using-your-extension)
 
 
-### Training Signum
+\\\
 **Note:** You have to execute this command in each instance.
 
 + `ulimit -n 1000000`
