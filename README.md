@@ -12,7 +12,7 @@ This code was originally forked from the [End to end ImageNet training](https://
 2. Run pre-scripts/imagenet_formatting.sh to preprocess the images
 
 ### C++ extension installation 
-1. Put the folder 'bit2byte-extension' to the directory of PyTorch source code
+1. Put the folder 'bit2byte-extension' to the directory of the PyTorch source code
 2. Execute this command on the directory of 'bit2byte-extension'  
 `python setup.py install`  
 You can find more information about C++ extension in [PyTorch documentation](https://pytorch.org/tutorials/advanced/cpp_extension.html#using-your-extension)

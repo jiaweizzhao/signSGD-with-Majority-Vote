@@ -21,6 +21,7 @@ import torchvision.models as models
 import Signum_SGD
 import Imagefolder_train_val
 import sys
+import tensorboardX
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -179,6 +180,8 @@ def main():
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed(args.seed)
 
+    log_writer = tensorboardX.SummaryWriter(args.save_dir) if dist.get_rank() == 0 else None
+
     # create model
     model = models.resnet50()
 
@@ -292,7 +295,6 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
     global iter_ptr
 
 
-    epoch_cost.set()
     train_record.set()
 
     # switch to train mode
