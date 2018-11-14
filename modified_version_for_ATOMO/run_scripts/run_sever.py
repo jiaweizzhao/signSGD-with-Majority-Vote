@@ -9,9 +9,9 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-34-212-170-250.us-west-2.compute.amazonaws.com',\
-'i-02c4f3dff7162c822':'ec2-54-149-190-52.us-west-2.compute.amazonaws.com',\
-'i-033efead24193ac02':'ec2-54-148-16-175.us-west-2.compute.amazonaws.com',\
+'fast_ai_base_1':'ec2-52-42-103-144.us-west-2.compute.amazonaws.com',\
+'i-02c4f3dff7162c822':'ec2-52-27-18-25.us-west-2.compute.amazonaws.com',\
+'i-033efead24193ac02':'ec2-18-237-44-183.us-west-2.compute.amazonaws.com',\
 #'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
 #'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
 #'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\

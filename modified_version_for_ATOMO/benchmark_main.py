@@ -196,7 +196,7 @@ def main():
         optimizer = Signum_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce)
     
     elif args.communication_method == 'QSGD':
-        optimizer = QSGD_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce， args)
+        optimizer = QSGD_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce, args = args)
     
 
     best_prec1 = 0
@@ -356,7 +356,26 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
                   'Total Training Time {train_time:.3f}'.format(
                    epoch, i, len(train_loader), batch_time=batch_time,
                    data_time=data_time, loss=losses, top1=top1, top5=top5, train_time=train_record.get_time()))
-            train_record.set()             
+            train_record.set()
+
+    #Tensorboard adding
+    if log_writer:
+        log_writer.add_scalar('train_iter/top1', top1.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/top5', top5.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/loss', losses.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/batch_time', batch_time.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/data_time', data_time.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/learning_rate_schedule', args.lr_present, iter_ptr)
+
+        log_writer.add_scalar('train_epoch/top1', top1.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/top5', top5.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/loss', losses.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/learning_rate_schedule', args.lr_present, epoch)
+
+        log_writer.add_scalar('train_time/top1', top1.get_avg(), train_record.get_time())
+        log_writer.add_scalar('train_time/top5', top5.get_avg(), train_record.get_time())
+        log_writer.add_scalar('train_time/loss', losses.get_avg(), train_record.get_time())               
+             
 
 def validate(val_loader, model, criterion, epoch, start_time, log_writer):
     batch_time = AverageMeter()
@@ -415,6 +434,20 @@ def validate(val_loader, model, criterion, epoch, start_time, log_writer):
     if dist.get_rank() == 0:
         print(f'~~{epoch}\t{float(time_diff.total_seconds() / 3600.0)}\t{top5.avg:.3f}\n')
         print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'.format(top1=top1, top5=top5)) 
+        if log_writer:
+            log_writer.add_scalar('test_iter/top1', top1.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/top5', top5.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/loss', losses.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/batch_time', batch_time.get_avg(), iter_ptr)
+
+            log_writer.add_scalar('test_epoch/top1', top1.get_avg(), epoch)
+            log_writer.add_scalar('test_epoch/top5', top5.get_avg(), epoch)
+            log_writer.add_scalar('test_epoch/loss', losses.get_avg(), epoch)
+            log_writer.add_scalar('test_epoch/learning_rate_schedule', args.lr_present, epoch)
+
+            log_writer.add_scalar('test_time/top1', top1.get_avg(), train_record.get_time())
+            log_writer.add_scalar('test_time/top5', top5.get_avg(), train_record.get_time())
+            log_writer.add_scalar('test_time/loss', losses.get_avg(), train_record.get_time())  
 
     return top1.avg
 

@@ -16,7 +16,7 @@ import numpy as np
 
 class SGD_distribute(Optimizer):
 
-    def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, args, **kwargs):
+    def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, args = None, **kwargs):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if not 0.0 <= momentum:
@@ -230,9 +230,12 @@ class SGD_distribute(Optimizer):
 
                                 dist.broadcast(tensor_signs_size, 0, group = self.all_inter_node_group)
                                 dist.broadcast(tensor_selected_size, 0, group = self.all_inter_node_group)
-                                if dist.get_rank() is not 0:
+                                if dist.get_rank() != 0:
                                     tensor_signs = torch.randn([int(tensor_signs_size[0])]).type_as(tensor_signs)
                                     tensor_selected = torch.randn([int(tensor_selected_size[0])]).type_as(tensor_selected)
+
+                                dist.barrier(group = self.all_inter_node_group)
+
                                 dist.broadcast(tensor_signs, 0, group = self.all_inter_node_group)
                                 dist.broadcast(tensor_selected, 0, group = self.all_inter_node_group)
                                 dist.broadcast(tensor_norm, 0, group = self.all_inter_node_group)
