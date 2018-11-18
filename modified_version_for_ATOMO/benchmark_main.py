@@ -82,6 +82,8 @@ def get_parser():
                         help='seed for initialization')
     parser.add_argument('--communication_method', default='Signum', type=str, help='xxx')
     parser.add_argument('--bidirection_compress', action='store_true', help='Use bidirection_compress')
+    parser.add_argument('--all_gather_commu', action='store_true', help='Use all_gather_commu')
+    parser.add_argument('--disable_majority_vote', action='store_true', help='Use disable_majority_vote')
     return parser
 
 cudnn.benchmark = True
@@ -193,7 +195,7 @@ def main():
     criterion = nn.CrossEntropyLoss().cuda()
 
     if args.communication_method == 'Signum':
-        optimizer = Signum_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce)
+        optimizer = Signum_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce, args = args)
     
     elif args.communication_method == 'QSGD':
         optimizer = QSGD_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce, args = args)

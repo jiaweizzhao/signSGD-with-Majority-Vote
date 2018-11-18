@@ -12,7 +12,7 @@ import os
 
 class SGD_distribute(Optimizer):
 
-    def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, **kwargs):
+    def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, args = None, **kwargs):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if not 0.0 <= momentum:
@@ -28,6 +28,7 @@ class SGD_distribute(Optimizer):
         #custom code
         self.compression_buffer = compression_buffer
         self.all_reduce = all_reduce
+        self.use_majority_vote = not args.disable_majority_vote
 
         self.MB = 1024 * 1024
         self.bucket_size = 100 * self.MB
@@ -120,30 +121,44 @@ class SGD_distribute(Optimizer):
                 else:
                     if self.nodes > 1:
                         if self.compression_buffer:
+                            d_p_new_origial = d_p_new
                             d_p_new, tensor_size = self.compressor.compress(d_p_new)
                         else:
                             d_p_new = torch.sign(d_p_new)
 
                         if self.local_rank == 0:
                             if dist.get_rank() == 0:
-                                d_p_new_list = []
-                                for index, inter_node_group in enumerate(self.inter_node_group_list):
-                                    d_p_temp = d_p_new.clone()
-                                    dist.broadcast(d_p_temp, self.inter_node_list[index + 1], group = inter_node_group)
-                                    d_p_new_list.append(d_p_temp)
+                                if self.use_majority_vote:
+                                    d_p_new_list = []
+                                    for index, inter_node_group in enumerate(self.inter_node_group_list):
+                                        d_p_temp = d_p_new.clone()
+                                        dist.broadcast(d_p_temp, self.inter_node_list[index + 1], group = inter_node_group)
+                                        d_p_new_list.append(d_p_temp)
+                                else:
+                                    for index, inter_node_group in enumerate(self.inter_node_group_list):
+                                        d_p_temp = d_p_new.clone()
+                                        dist.broadcast(d_p_temp, self.inter_node_list[index + 1], group = inter_node_group)
+                                        d_p_uncompressed = self.compressor.uncompress(d_p_temp, tensor_size)
+                                        d_p_new_origial += d_p_uncompressed
+                                    d_p_new, tensor_size = self.compressor.compress(d_p_new_origial)
+
                             else:
                                 dist.broadcast(d_p_new, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1])                                
                                 dist.barrier(group = self.all_inter_node_group)
 
                             if dist.get_rank() == 0:
                                 if self.compression_buffer:
-                                    d_p_new_list.append(d_p_new) #count itself
-                                    d_p_new = self.compressor.majority_vote(d_p_new_list)
+                                    if self.use_majority_vote:
+                                        d_p_new_list.append(d_p_new) #count itself
+                                        d_p_new = self.compressor.majority_vote(d_p_new_list)
+                                    else:
+                                        pass
                                 else:
                                     for d_p_temp in d_p_new_list:
                                         d_p_new.add_(d_p_temp)
                                     d_p_new = d_p_new / self.nodes
                                 dist.barrier(group = self.all_inter_node_group)
+
                             dist.broadcast(d_p_new, 0, group = self.all_inter_node_group)
 
                         if self.compression_buffer:
