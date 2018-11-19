@@ -1,0 +1,19 @@
+test on p3.2x
+
+---------
+Signum_full_time 0.005267620086669922
+Signum_coding_time 0.0034232139587402344
+Signum_decoding_time 0.0018417835235595703
+---------
+QSGD_gpu_full_time 0.003102540969848633
+QSGD_gpu_coding_time 0.0021762847900390625
+QSGD_gpu_decoding_time 0.0009238719940185547
+---------
+QSGD_cpu_full_time 0.028627395629882812
+QSGD_cpu_coding_time 0.02582836151123047
+QSGD_cpu_decoding_time 0.0027954578399658203
+---------
+ATOMO_full_time 0.007600069046020508
+ATOMO_coding_time 0.0063593387603759766
+ATOMO_decoding_time 0.0012366771697998047
+---------

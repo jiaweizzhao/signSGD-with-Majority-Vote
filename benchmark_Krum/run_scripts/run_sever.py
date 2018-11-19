@@ -9,9 +9,9 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-54-203-186-168.us-west-2.compute.amazonaws.com',\
-'i-02c4f3dff7162c822':'ec2-54-190-25-240.us-west-2.compute.amazonaws.com',\
-'i-033efead24193ac02':'ec2-34-223-252-145.us-west-2.compute.amazonaws.com',\
+'fast_ai_base_1':'ec2-34-219-90-70.us-west-2.compute.amazonaws.com',\
+'i-02c4f3dff7162c822':'ec2-18-237-126-24.us-west-2.compute.amazonaws.com',\
+'i-033efead24193ac02':'ec2-52-42-12-89.us-west-2.compute.amazonaws.com',\
 #'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
 #'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
 #'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\
@@ -65,7 +65,7 @@ def start_sever():
 
         sftp = paramiko.SFTPClient.from_transport(ssh.get_transport())
         #.sh file upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/run_scripts/3_workers_Signum/train_script' + str(index + 1) + '.sh',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/run_scripts/3_workers_QSGD/train_script' + str(index + 1) + '.sh',\
             '/home/ubuntu/train_script.sh')
 
         #benchmark_main.py upload

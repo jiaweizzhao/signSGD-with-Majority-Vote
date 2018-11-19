@@ -18,4 +18,4 @@ sudo /home/ubuntu/anaconda3/envs/fastai/bin/python3 -m torch.distributed.launch 
 --master_port=1235 benchmark_main.py ~/ILSVRC/Data/CLS-LOC -a resnet50 -b 128 --lr 1e-4 \
 --epochs 90 --save-dir ./result/speed_test/test --world-size 3 --print-freq 50 \
 --extra_epochs 0 --compress --signum --communication_method Signum --disable_majority_vote \
---dist-url tcp://ec2-54-203-186-168.us-west-2.compute.amazonaws.com:1235
+--dist-url tcp://ec2-54-202-114-194.us-west-2.compute.amazonaws.com:1235

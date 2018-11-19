@@ -10,6 +10,30 @@ import os
 #Signum with majority vote
 
 
+#add time recorder
+class Time_recorder(object):
+    def __init__(self):
+        self.time = 0
+        self.begin = 0
+
+    def reset(self):
+        self.time = 0
+        pass
+
+    def set(self):
+        torch.cuda.synchronize()
+        self.begin = time.time()
+        #pass
+
+    def record(self):
+        torch.cuda.synchronize()
+        self.end = time.time()
+        self.time += self.end - self.begin
+        #pass
+
+    def get_time(self):
+        return self.time
+
 class SGD_distribute(Optimizer):
 
     def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, args = None, **kwargs):

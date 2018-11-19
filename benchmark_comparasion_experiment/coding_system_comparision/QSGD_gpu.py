@@ -23,7 +23,6 @@ def encode(v, **kwargs):
     selected = torch.masked_select(idx, mask).long()
     signs = torch.masked_select(signs, mask)
     t += [time.time()]
-
     data = {'masking_time': t[-1] - t[-2], 'gen_mask_time': t[1] - t[0],
             'to_gpu_time': t[-2] - t[-3]}
     return {'signs': signs, 'size': v.size(), 'selected': selected,
