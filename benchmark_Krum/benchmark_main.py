@@ -84,6 +84,12 @@ def get_parser():
     parser.add_argument('--bidirection_compress', action='store_true', help='Use bidirection_compress')
     parser.add_argument('--all_gather_commu', action='store_true', help='Use all_gather_commu')
     parser.add_argument('--disable_majority_vote', action='store_true', help='Use disable_majority_vote')
+    parser.add_argument('--enable_krum', action='store_true', help='Use enable_krum')
+    parser.add_argument('--krum_f', default=2, type=int)
+    parser.add_argument('--enable_adversary', action='store_true', help='Use enable_adversary') #default is random adversary
+    parser.add_argument('--enable_minus_adversary', action='store_true', help='Use enable_adversary')
+    parser.add_argument('--adversary_num', default=0, type=int)
+
     return parser
 
 cudnn.benchmark = True

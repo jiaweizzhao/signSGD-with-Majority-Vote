@@ -7,6 +7,7 @@ from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors, \
 import compressor
 import time
 import os
+import byzantine_utils
 #Signum with majority vote
 
 
@@ -53,6 +54,18 @@ class SGD_distribute(Optimizer):
         self.compression_buffer = compression_buffer
         self.all_reduce = all_reduce
         self.use_majority_vote = not args.disable_majority_vote
+        self.enable_krum = args.enable_krum
+        self.krum_f = args.krum_f
+        self.enable_adversary = args.enable_adversary
+        self.adversary_num = args.adversary_num
+        self.enable_minus_adversary = args.enable_minus_adversary
+
+        if self.enable_krum:
+            self.compression_buffer = True
+            self.all_reduce = False
+            self.use_majority_vote = True
+            self.enable_minus_adversary = False
+
 
         self.MB = 1024 * 1024
         self.bucket_size = 100 * self.MB
@@ -142,13 +155,25 @@ class SGD_distribute(Optimizer):
 
                 if self.all_reduce:
                     dist.all_reduce(d_p_new, group = 0) #self.all_gpu
+    
                 else:
+                    #become adversary
+                    if self.enable_adversary:
+                        if dist.get_rank() <= (self.adversary_num - 1):
+                            if self.enable_minus_adversary:
+                                d_p_new = - d_p_new
+                            else:
+                                d_p_new = torch.randn(d_p_new.size()).type_as(d_p_new)
                     if self.nodes > 1:
-                        if self.compression_buffer:
+                        if self.enable_krum:
+                            #send full tensor
+                            d_p_new = d_p_new
+                        elif self.compression_buffer:
                             d_p_new_origial = d_p_new
                             d_p_new, tensor_size = self.compressor.compress(d_p_new)
                         else:
                             d_p_new = torch.sign(d_p_new)
+
 
                         if self.local_rank == 0:
                             if dist.get_rank() == 0:
@@ -172,7 +197,12 @@ class SGD_distribute(Optimizer):
 
                             if dist.get_rank() == 0:
                                 if self.compression_buffer:
-                                    if self.use_majority_vote:
+                                    if self.enable_krum:
+                                        d_p_new_list.append(d_p_new)
+                                        #byzantine_setting_krum
+                                        d_p_new = byzantine_utils.krum(d_p_new_list, self.krum_f, multi=True) #.type_as(d_p_new)
+                                        d_p_new = d_p_new / (len(d_p_new_list) - self.krum_f)
+                                    elif self.use_majority_vote:
                                         d_p_new_list.append(d_p_new) #count itself
                                         d_p_new = self.compressor.majority_vote(d_p_new_list)
                                     else:
@@ -185,7 +215,9 @@ class SGD_distribute(Optimizer):
 
                             dist.broadcast(d_p_new, 0, group = self.all_inter_node_group)
 
-                        if self.compression_buffer:
+                        if self.enable_krum:
+                            d_p_new = d_p_new
+                        elif self.compression_buffer:
                             d_p_new = self.compressor.uncompress(d_p_new, tensor_size)
                 #unflatten
                 dev_grads_new = _unflatten_dense_tensors(d_p_new,dev_grads)
