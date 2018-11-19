@@ -65,28 +65,28 @@ def start_sever():
 
         sftp = paramiko.SFTPClient.from_transport(ssh.get_transport())
         #.sh file upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/run_scripts/3_workers_QSGD/train_script' + str(index + 1) + '.sh',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/run_scripts/3_workers_QSGD/train_script' + str(index + 1) + '.sh',\
             '/home/ubuntu/train_script.sh')
 
         #benchmark_main.py upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/benchmark_main.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/benchmark_main.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/benchmark_main.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/Imagefolder_train_val.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/Imagefolder_train_val.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Imagefolder_train_val.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/resnet.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/resnet.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/resnet.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/QSGD_gpu.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/QSGD_gpu.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/QSGD_gpu.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/QSGD_optimizer.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/QSGD_optimizer.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/QSGD_optimizer.py')
         #distributed_model upload
         #sftp.put('/Users/jonah/Desktop/signum/source code/imagenet-fast_jiawei/imagenet_nv/distributed_model.py',\
             #'/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/distributed_model.py')
         #Signum_SGD.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/Signum_optimizer.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/Signum_optimizer.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Signum_optimizer.py')
         #compressor.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/modified_version_for_ATOMO/compressor.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/compressor.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/compressor.py')
 
         '''

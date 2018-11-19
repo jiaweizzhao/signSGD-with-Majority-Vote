@@ -409,8 +409,10 @@ def train():
                 elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss), cur_loss / math.log(2)))
 
             
-            model_evalue = copy.deepcopy(model)
-            criterion_evalue = copy.deepcopy(criterion)
+            #model_evalue = copy.deepcopy(model)
+            #criterion_evalue = copy.deepcopy(criterion)
+            model_evalue = model
+            criterion_evalue = criterion
             #model_evalue = model_evalue.cuda()
             #test evaluate
             test_loss = evaluate(model_evalue, criterion_evalue, test_data, test_batch_size)
@@ -435,7 +437,7 @@ def train():
                 log_writer.add_scalar('val_time/loss', val_loss2, train_record.get_time())
                 log_writer.add_scalar('val_time/bpc', val_loss2 / math.log(2), train_record.get_time())   
 
-            del model_evalue, criterion_evalue
+            #del model_evalue, criterion_evalue
             
 
             if log_writer:
@@ -466,6 +468,11 @@ def train():
             start_time = time.time()
             train_record.set()
             epoch_cost.set()
+
+            #add evaluation
+            if args.model == 'QRNN': model.module.reset()
+            hidden = model.module.init_hidden(args.batch_size)
+
 
         ###
         batch += 1

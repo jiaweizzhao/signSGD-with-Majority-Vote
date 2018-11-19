@@ -25,15 +25,15 @@ class Time_recorder(object):
         pass
 
     def set(self):
-        torch.cuda.synchronize()
-        self.begin = time.time()
-        #pass
+        #torch.cuda.synchronize()
+        #self.begin = time.time()
+        pass
 
     def record(self):
-        torch.cuda.synchronize()
-        self.end = time.time()
-        self.time += self.end - self.begin
-        #pass
+        #torch.cuda.synchronize()
+        #self.end = time.time()
+        #self.time += self.end - self.begin
+        pass
 
     def get_time(self):
         return self.time
@@ -178,8 +178,8 @@ class SGD_distribute(Optimizer):
                         if self.compression_buffer:
                             coded, data_time = QSGD_gpu.encode(d_p_new)
                             #specific coded dic just on CPU
-                            tensor_signs = coded['signs']
-                            tensor_selected = coded['selected']
+                            tensor_signs = coded['signs'].float().to(self.device)
+                            tensor_selected = coded['selected'].float().to(self.device)
                             tensor_norm = coded['norm']
                             #size
                             tensor_signs_size = self.pack_len_tensor_into_tensor(tensor_signs)
@@ -204,17 +204,15 @@ class SGD_distribute(Optimizer):
                                     if node_index != self.nodes_rank:
 
                                         d.set()
-                                        
-                                        coded_temp = QSGD_gpu.coded_template()
-                                        #coded_temp = coded.copy()
-                                        
+                                        f.set()
+                                        coded_temp = coded.copy()
+                                        f.record()
                                         b.set()
                                         tensor_signs_size_temp = tensor_signs_size.clone()
                                         dist.broadcast(tensor_signs_size_temp, node_index, group = self.all_inter_node_group)
                                         b.record()
                                         c.set()
-                                        tensor_signs_temp = torch.zeros([int(tensor_signs_size_temp[0])], device = self.device, dtype=torch.int)
-                                        print('tensor_signs_temp', tensor_signs_temp.size())
+                                        tensor_signs_temp = torch.zeros([int(tensor_signs_size_temp[0])], device = self.device, dtype=torch.float)
                                         c.record()
                                         a.set()
                                         dist.broadcast(tensor_signs_temp, node_index, group = self.all_inter_node_group)
@@ -224,30 +222,30 @@ class SGD_distribute(Optimizer):
                                         e.set()
                                         tensor_selected_size_temp = tensor_selected_size.clone()
                                         dist.broadcast(tensor_selected_size_temp, node_index, group = self.all_inter_node_group)
-                                        tensor_selected_temp = torch.zeros([int(tensor_selected_size_temp[0])], device = self.device, dtype=torch.long)                             
+                                        tensor_selected_temp = torch.zeros([int(tensor_selected_size_temp[0])], device = self.device, dtype=torch.float)                             
                                         dist.broadcast(tensor_selected_temp, node_index, group = self.all_inter_node_group)
-                                        print('tensor_selected_temp', tensor_selected_temp.size())
                                         e.record()
-                                        f.set()
+                                        
                                         tensor_norm_temp = tensor_norm.clone()
                                         dist.broadcast(tensor_norm_temp, node_index, group = self.all_inter_node_group)
 
-                                        coded_temp['signs'] = tensor_signs_temp
-                                        coded_temp['selected'] = tensor_selected_temp
+                                        coded_temp['signs'] = tensor_signs_temp.int()
+                                        coded_temp['selected'] = tensor_selected_temp.long()
                                         coded_temp['norm'] = tensor_norm_temp
-                                        coded_temp['size'] = coded['size']
 
                                         tensor_decoded = QSGD_gpu.decode(coded_temp, cuda = True)
                                         d_p_new = d_p_new + tensor_decoded
-                                        f.record()
-
                                         
+
+
+                                        '''
                                         print('a', a.get_time())
                                         print('b', b.get_time())
                                         print('c', c.get_time())
                                         print('d', d.get_time())
                                         print('e', e.get_time())
                                         print('f', f.get_time())
+                                        '''
                                         
 
                                     else:
@@ -265,25 +263,24 @@ class SGD_distribute(Optimizer):
                             else:
                                 if dist.get_rank() == 0:
                                     for index, inter_node_group in enumerate(self.inter_node_group_list):
-                                        coded_temp = QSGD_gpu.coded_template()
+                                        coded_temp = coded.copy()
 
                                         tensor_signs_size_temp = tensor_signs_size.clone()
                                         dist.broadcast(tensor_signs_size_temp, self.inter_node_list[index + 1], group = inter_node_group)
-                                        tensor_signs_temp = torch.randn([int(tensor_signs_size_temp[0])]).type_as(tensor_signs)
+                                        tensor_signs_temp = torch.zeros([int(tensor_signs_size_temp[0])], device = self.device, dtype=torch.float)
                                         dist.broadcast(tensor_signs_temp, self.inter_node_list[index + 1], group = inter_node_group)
 
                                         tensor_selected_size_temp = tensor_selected_size.clone()
                                         dist.broadcast(tensor_selected_size_temp, self.inter_node_list[index + 1], group = inter_node_group)
-                                        tensor_selected_temp = torch.randn([int(tensor_selected_size_temp[0])]).type_as(tensor_selected)                             
+                                        tensor_selected_temp = torch.zeros([int(tensor_selected_size_temp[0])], device = self.device, dtype=torch.float)                            
                                         dist.broadcast(tensor_selected_temp, self.inter_node_list[index + 1], group = inter_node_group)
 
                                         tensor_norm_temp = tensor_norm.clone()
                                         dist.broadcast(tensor_norm_temp, self.inter_node_list[index + 1], group = inter_node_group)
 
-                                        coded_temp['signs'] = tensor_signs_temp
-                                        coded_temp['selected'] = tensor_selected_temp
+                                        coded_temp['signs'] = tensor_signs_temp.int()
+                                        coded_temp['selected'] = tensor_selected_temp.long()
                                         coded_temp['norm'] = tensor_norm_temp
-                                        coded_temp['size'] = coded['size']
 
                                         tensor_decoded = QSGD_gpu.decode(coded_temp, cuda = True)
                                         d_p_new = d_p_new + tensor_decoded
@@ -307,7 +304,7 @@ class SGD_distribute(Optimizer):
                                     dist.broadcast(tensor_signs, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1]) 
                                     dist.broadcast(tensor_selected_size, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1])
                                     dist.broadcast(tensor_selected, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1]) 
-                                    dist.broadcast(tensor_norm, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1]) 
+                                    dist.broadcast(tensor_norm, dist.get_rank(), group = self.inter_node_group_list[self.nodes_rank - 1])
 
                                     '''
                                     #temp
