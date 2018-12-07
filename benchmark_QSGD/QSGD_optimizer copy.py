@@ -67,8 +67,6 @@ class SGD_distribute(Optimizer):
         self.all_reduce = all_reduce
         self.device = torch.device('cuda:' + str(local_rank))
 
-        print('all_reduce',self.all_reduce)
-
         self.MB = 1024 * 1024
         self.bucket_size = 100 * self.MB
 
@@ -76,7 +74,6 @@ class SGD_distribute(Optimizer):
         self.svd_rank = 1
         self.bidirection_compress = args.bidirection_compress
         self.all_gather_commu = args.all_gather_commu
-        self.enable_max = True
 
         if self.compression_buffer:
 
@@ -131,13 +128,6 @@ class SGD_distribute(Optimizer):
     def __setstate__(self, state):
         super(SGD_distribute, self).__setstate__(state)
 
-
-    def enable_max_norm(self):
-        self.enable_max = True
-
-    def disable_max_norm(self):
-        self.enable_max = False
-
     def pack_len_tensor_into_tensor(self, tensor):
         #tensor here should be 1-dimension
         tensor_len = len(tensor)
@@ -182,26 +172,12 @@ class SGD_distribute(Optimizer):
                 d_p_new = _flatten_dense_tensors(dev_grads)
 
                 if self.all_reduce:
-                    coded, data_time = QSGD_gpu.encode(d_p_new,self.enable_max)
-                    tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
-                    dist.all_reduce(tensor_decoded, group = 0)
-                    tensor_decoded = tensor_decoded / dist.get_world_size()
-                    if self.bidirection_compress:
-                        if dist.get_rank() == 0:
-                            coded, data_time = QSGD_gpu.encode(tensor_decoded,self.enable_max)
-                            tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
-                        else:
-                            tensor_decoded = torch.zeros(tensor_decoded.size()).type_as(tensor_decoded)
-
-                        dist.all_reduce(tensor_decoded, group = 0)
-                        
-                    d_p_new = tensor_decoded
-
+                    dist.all_reduce(d_p_new, group = 0) #self.all_gpu
                 else:
                     if self.nodes > 1:
                         if self.compression_buffer:
 
-                            coded, data_time = QSGD_gpu.encode(d_p_new,self.enable_max)
+                            coded, data_time = QSGD_gpu.encode(d_p_new)
                             #specific coded dic just on CPU
                             tensor_signs = coded['signs']
                             tensor_selected = coded['selected']
@@ -351,7 +327,8 @@ class SGD_distribute(Optimizer):
 
                                 if self.bidirection_compress:                
                                     if dist.get_rank() == 0:
-                                        coded, data_time = QSGD_gpu.encode(d_p_new,self.enable_max)
+
+                                        coded, data_time = QSGD_gpu.encode(d_p_new)
                                         tensor_signs = coded['signs']
                                         tensor_selected = coded['selected']
                                         tensor_norm = coded['norm']
@@ -364,10 +341,8 @@ class SGD_distribute(Optimizer):
                                     dist.broadcast(tensor_signs_size, 0, group = self.all_inter_node_group)
                                     dist.broadcast(tensor_selected_size, 0, group = self.all_inter_node_group)
                                     if dist.get_rank() != 0:
-                                        torch.cuda.synchronize()
                                         tensor_signs = torch.randn([int(tensor_signs_size[0])]).type_as(tensor_signs)
                                         tensor_selected = torch.randn([int(tensor_selected_size[0])]).type_as(tensor_selected)
-                                        torch.cuda.synchronize()
 
                                     dist.barrier(group = self.all_inter_node_group)
 
@@ -389,7 +364,7 @@ class SGD_distribute(Optimizer):
 
                     else:
                         # test for one
-                        coded, data_time = QSGD_gpu.encode(d_p_new,self.enable_max)
+                        coded, data_time = QSGD_gpu.encode(d_p_new)
                         tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
                         d_p_new = tensor_decoded
 

@@ -9,12 +9,12 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-34-219-90-70.us-west-2.compute.amazonaws.com',\
-'i-02c4f3dff7162c822':'ec2-18-237-126-24.us-west-2.compute.amazonaws.com',\
-'i-033efead24193ac02':'ec2-52-42-12-89.us-west-2.compute.amazonaws.com',\
-#'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
-#'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
-#'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\
+#'5':'ec2-34-221-38-127.us-west-2.compute.amazonaws.com',\
+#'6':'ec2-18-236-219-174.us-west-2.compute.amazonaws.com',\
+#'7':'ec2-54-149-187-90.us-west-2.compute.amazonaws.com',\
+'i-034074c3b66814c86':'ec2-18-236-214-72.us-west-2.compute.amazonaws.com',\
+'i-082b1124385c7381c':'ec2-34-215-43-240.us-west-2.compute.amazonaws.com',\
+'i-0b0d86786243fd150':'ec2-18-237-206-232.us-west-2.compute.amazonaws.com',\
 #'i-0f05a98dfcb5de301':'ec2-34-220-194-215.us-west-2.compute.amazonaws.com',\
 #'i-0f527dbf350eeabbd':'ec2-35-165-67-21.us-west-2.compute.amazonaws.com',\
 #'fast_ai_9':'ec2-34-221-191-227.us-west-2.compute.amazonaws.com',\

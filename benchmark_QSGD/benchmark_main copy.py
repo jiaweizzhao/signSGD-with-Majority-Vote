@@ -84,7 +84,6 @@ def get_parser():
     parser.add_argument('--bidirection_compress', action='store_true', help='Use bidirection_compress')
     parser.add_argument('--all_gather_commu', action='store_true', help='Use all_gather_commu')
     parser.add_argument('--disable_majority_vote', action='store_true', help='Use disable_majority_vote')
-    parser.add_argument('--enable_max', action='store_true', help='Use enable_max')
     return parser
 
 cudnn.benchmark = True
@@ -143,7 +142,7 @@ def get_loaders(traindir, valdir, use_val_sampler=False, min_scale=0.08, Data_au
         train_sampler = None
     train_loader = torch.utils.data.DataLoader(
         training_set, batch_size=args.batch_size, shuffle=(train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler, worker_init_fn = np.random.seed(655))
+        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
     testset = datasets.CIFAR10(root='./cifar10_data', train=False,
                                            download=True, transform=transform_test)
@@ -200,11 +199,7 @@ def main():
     
     elif args.communication_method == 'QSGD':
         optimizer = QSGD_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce, args = args)
-   
-        if args.enable_max:
-            optimizer.enable_max_norm() 
-        else:
-            optimizer.disable_max_norm()
+    
 
     best_prec1 = 0
 
@@ -291,15 +286,6 @@ class data_prefetcher():
 
 
 def train(train_loader, model, criterion, optimizer, epoch, log_writer):
-    '''
-    if epoch == 36:
-        optimizer.disable_max_norm()
-        print('switch to disable max')
-    '''
-
-    computation_cost = Time_recorder()
-    communication_cost = Time_recorder()
-
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -317,7 +303,6 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
     i = -1
     #while input is not None:
     for input, target in train_loader:
-        computation_cost.set()
         assert input.size(0) == target.size(0)
         i += 1
         iter_ptr += 1
@@ -357,11 +342,7 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
-        computation_cost.record()
-        #measure the cost of commnucation
-        communication_cost.set()
         optimizer.step()
-        communication_cost.record()
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
@@ -395,13 +376,7 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
 
         log_writer.add_scalar('train_time/top1', top1.get_avg(), train_record.get_time())
         log_writer.add_scalar('train_time/top5', top5.get_avg(), train_record.get_time())
-        log_writer.add_scalar('train_time/loss', losses.get_avg(), train_record.get_time())  
-
-        log_writer.add_scalar('train_epoch/communication_cost', communication_cost.get_time(), epoch)
-        log_writer.add_scalar('train_epoch/computation_cost', computation_cost.get_time(), epoch)  
-
-    print('communication_cost',communication_cost.get_time())               
-    print('computation_cost',computation_cost.get_time())               
+        log_writer.add_scalar('train_time/loss', losses.get_avg(), train_record.get_time())               
              
 
 def validate(val_loader, model, criterion, epoch, start_time, log_writer):

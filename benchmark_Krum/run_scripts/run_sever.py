@@ -9,12 +9,13 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-18-237-163-253.us-west-2.compute.amazonaws.com',\
-'i-02c4f3dff7162c822':'ec2-54-202-127-16.us-west-2.compute.amazonaws.com',\
-'i-033efead24193ac02':'ec2-54-202-109-219.us-west-2.compute.amazonaws.com',\
-#'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
-#'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
-#'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\
+'i-05a8d5e118d1a391a': 'ec2-35-167-102-54.us-west-2.compute.amazonaws.com',\
+'i-05fcb6eeafc2ae3f4': 'ec2-34-209-62-141.us-west-2.compute.amazonaws.com',\
+'i-0982a6284ea8feaa8': 'ec2-54-245-59-196.us-west-2.compute.amazonaws.com',\
+'i-0f7ed93ad03cbd6e0': 'ec2-34-209-238-130.us-west-2.compute.amazonaws.com',\
+'i-05a64c634aaacf690': 'ec2-34-213-170-68.us-west-2.compute.amazonaws.com',\
+'i-0709a3f272f613c99': 'ec2-35-167-247-55.us-west-2.compute.amazonaws.com',\
+'i-09c79181de2153b57': 'ec2-54-202-238-48.us-west-2.compute.amazonaws.com'
 #'i-0f05a98dfcb5de301':'ec2-34-220-194-215.us-west-2.compute.amazonaws.com',\
 #'i-0f527dbf350eeabbd':'ec2-35-165-67-21.us-west-2.compute.amazonaws.com',\
 #'fast_ai_9':'ec2-34-221-191-227.us-west-2.compute.amazonaws.com',\
@@ -65,7 +66,7 @@ def start_sever():
 
         sftp = paramiko.SFTPClient.from_transport(ssh.get_transport())
         #.sh file upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_Krum/run_scripts/3_example/train_script' + str(index + 1) + '.sh',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_Krum/run_scripts/7_example/train_script' + str(index + 1) + '.sh',\
             '/home/ubuntu/train_script.sh')
 
         #benchmark_main.py upload
