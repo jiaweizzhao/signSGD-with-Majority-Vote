@@ -44,21 +44,21 @@ def encode(v, enable_max, **kwargs):
     signs_lower[w < 0] = - signs_lower[w < 0]
     signs_lower = torch.masked_select(signs_lower, mask_lower)
 
-    return {'size': v.size(), 'signs_upper': signs_upper, 'selected_upper': selected_upper, \
-        'signs_lower': signs_lower, 'selected_lower': selected_lower, 'norm': norm}
+    signs = torch.cat((signs_upper,signs_lower), 0)
+    selected = torch.cat((selected_upper,selected_lower), 0)
+
+
+    return {'size': v.size(), 'signs': signs, 'selected': selected, \
+            'norm': norm}
 
 def decode(code, cuda=False):
     v = torch.zeros(code['size'])
-    signs_upper = code['signs_upper']
-    signs_lower = code['signs_lower']
+    signs = code['signs']
     if cuda:
         v = v.cuda()
-        signs_upper = signs_upper.cuda()
-        signs_lower = signs_lower.cuda()
+        signs = signs.cuda()
     flat = v.view(-1)
-    if len(code['selected_upper']) > 0:
-        flat[code['selected_upper']] = code['norm'] * signs_upper.float()
-    if len(code['selected_lower']) > 0:
-        flat[code['selected_lower']] = code['norm'] * signs_lower.float()
+    if len(code['selected']) > 0:
+        flat[code['selected']] = code['norm'] * signs.float()
 
     return v
