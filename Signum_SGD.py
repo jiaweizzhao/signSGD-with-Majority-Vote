@@ -148,6 +148,7 @@ class SGD_distribute(Optimizer):
 
                         if self.compression_buffer:
                             d_p_new = self.compressor.uncompress(d_p_new, tensor_size)
+
                 #unflatten
                 dev_grads_new = _unflatten_dense_tensors(d_p_new,dev_grads)
                 for grad, reduced in zip(dev_grads, dev_grads_new):
