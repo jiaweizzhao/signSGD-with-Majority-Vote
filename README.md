@@ -5,22 +5,28 @@ This repository contains the code used for paper:
 
 This code was originally forked from the [End to end ImageNet training](https://github.com/fastai/imagenet-fast).
 
-## Experiments
+
+## Pre-installation
 
 ### Downloading ImageNet
-1. Run pre-scripts/download_kaggle_imagenet.sh to download the ImageNet dataset
-2. Run pre-scripts/imagenet_formatting.sh to preprocess the images
+1. You can download ImageNet from [Kaggle](https://www.kaggle.com/c/imagenet-object-localization-challenge/data).
+2. You can download from our S3 bucket (s3://signum-majority-vote/dataset/ILSVRC.tar) (reproduction purpose only).
 
 ### C++ extension installation 
-1. Put the folder 'bit2byte-extension' to the directory of the PyTorch source code
-2. Execute this command on the directory of 'bit2byte-extension'  
+1. Put the folder 'main/bit2byte-extension' to the directory of the PyTorch source code
+2. Execute this command on the directory of 'main/bit2byte-extension'  
 `python setup.py install`  
 You can find more information about C++ extension in [PyTorch documentation](https://pytorch.org/tutorials/advanced/cpp_extension.html#using-your-extension)
 
-### Training Signum
+## Experiments
 
+**Note:** You have to execute following commands in each instance.
 
-**Note:** You have to execute this command in each instance.
+### ImageNet Benchmark
+
+Execute following commands on the directory of 'main'
+
+#### Training Signum
 
 + `ulimit -n 1000000`
 `sudo /home/ubuntu/anaconda3/envs/fastai/bin/python3 -m torch.distributed.launch \
@@ -29,9 +35,8 @@ You can find more information about C++ extension in [PyTorch documentation](htt
 --epochs 80 --save-dir ./ --world-size [number of instances] --print-freq 200 --compress --dist_backend gloo --weight-decay 0.1 --momentum 0.9 \
 --dist-url [parameter sever's url]`
 
+### Training Vanilla SGD
 
-### Training SGD
-**Note:** You have to execute this command in each instance.
 
 + `ulimit -n 1000000`
 `sudo /home/ubuntu/anaconda3/envs/fastai/bin/python3 -m torch.distributed.launch \
@@ -39,3 +44,29 @@ You can find more information about C++ extension in [PyTorch documentation](htt
 --master_port=1235 benchmark_main.py ~/ILSVRC/Data/CLS-LOC -a resnet50 -b 128 --lr 0.1 \
 --epochs 80 --save-dir ./ --world-size [number of instances] --print-freq 200 --all_reduce --dist_backend nccl --weight-decay 0.0001 --momentum 0.9 \
 --dist-url [parameter sever's url]`
+
+### QRNN Benchmark
+
+Execute following commands on the directory of 'benchmark/QRNN'
+
+#### Training Signum
+
+#### Training Adam
+
+### QSGD Benchmark
+
+Execute following commands on the directory of 'benchmark/QSGD'
+
+#### Training Signum
+
+#### Training QSGD
+
+### Krum Benchmark
+
+Execute following commands on the directory of 'benchmark/Krum'
+
+#### Training Signum
+
+#### Training Krum
+
+

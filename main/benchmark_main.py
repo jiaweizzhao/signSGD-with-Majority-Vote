@@ -186,7 +186,6 @@ def main():
     model = models.resnet50()
 
     model = model.cuda()
-    n_dev = torch.cuda.device_count()
 
     #model.para sync
     global param_copy
