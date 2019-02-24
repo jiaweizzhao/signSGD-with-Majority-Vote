@@ -48,7 +48,7 @@ parser.add_argument('--dropoute', type=float, default=0.1,
                     help='dropout to remove words from embedding layer (0 = no dropout)')
 parser.add_argument('--wdrop', type=float, default=0.5,
                     help='amount of weight dropout to apply to the RNN hidden to hidden matrix')
-parser.add_argument('--seed', type=int, default=778,
+parser.add_argument('--seed', type=int, default=666, #778
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
                     help='random seed')
@@ -90,6 +90,10 @@ parser.add_argument('--tuning_mode', action='store_true',
 parser.add_argument('--momentun_warm_up', action='store_true',
                     help='tuning')
 parser.add_argument('--multi_gpu', action='store_true',
+                    help='tuning')
+parser.add_argument('--single_worker', action='store_true',
+                    help='tuning')
+parser.add_argument('--multi_batch_size', action='store_true',
                     help='tuning')
 args = parser.parse_args()
 args.tied = True
@@ -500,7 +504,7 @@ try:
         else:
             optimizer = torch.optim.Adam(params, lr=args.lr, weight_decay=args.wdecay)
     if args.optimizer == 'signum':
-            optimizer = Signum_SGD.SGD_distribute(params, lr=args.lr, momentum=args.momentum, weight_decay=args.wdecay, local_rank = args.local_rank, compression_buffer = True, all_reduce = False)       
+            optimizer = Signum_SGD.SGD_distribute(params, lr=args.lr, momentum=args.momentum, weight_decay=args.wdecay, local_rank = args.local_rank, compression_buffer = True, all_reduce = False, single_worker = args.single_worker)       
 
     #print('momentum set to 0')
     for epoch in range(1, args.epochs+1):
@@ -509,6 +513,13 @@ try:
         train()
         #custom shuffle the data each epoch
         del train_data
+
+        #custom code for multi-batch_size training
+        if args.multi_batch_size:
+            args.batch_size = args.batch_size * 2
+            if args.batch_size == 240:
+                args.batch_size = 240
+
         if args.distributed:
             train_data = batchify_distributed(corpus.train, args.batch_size, args, epoch)
         else:
@@ -588,7 +599,7 @@ try:
                 print('Switching to ASGD')
                 optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
             '''
-            if epoch in args.when or epoch == 20:
+            if epoch in args.when or epoch == 24:
                 print('Saving model before learning rate decreased')
                 model_save('{}.e{}'.format(args.save, epoch))
                 print('Dividing learning rate by 10')

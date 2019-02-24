@@ -85,6 +85,7 @@ def get_parser():
     parser.add_argument('--all_gather_commu', action='store_true', help='Use all_gather_commu')
     parser.add_argument('--disable_majority_vote', action='store_true', help='Use disable_majority_vote')
     parser.add_argument('--enable_max', action='store_true', help='Use enable_max')
+    parser.add_argument("--qsgd_level", type=int)
     return parser
 
 cudnn.benchmark = True
@@ -200,11 +201,13 @@ def main():
     
     elif args.communication_method == 'QSGD':
         optimizer = QSGD_optimizer.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce, args = args)
-   
+        
+        '''
         if args.enable_max:
             optimizer.enable_max_norm() 
         else:
             optimizer.disable_max_norm()
+        '''
 
     best_prec1 = 0
 

@@ -46,6 +46,7 @@ e = Time_recorder()
 f = Time_recorder()
 
 
+
 class SGD_distribute(Optimizer):
 
     def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, args = None, **kwargs):
@@ -67,8 +68,6 @@ class SGD_distribute(Optimizer):
         self.device = torch.device('cuda:' + str(local_rank))
 
         print('all_reduce',self.all_reduce)
-
-        print('use QSGD')
 
         self.MB = 1024 * 1024
         self.bucket_size = 100 * self.MB
@@ -184,17 +183,13 @@ class SGD_distribute(Optimizer):
                 d_p_new = _flatten_dense_tensors(dev_grads)
 
                 if self.all_reduce:
-                    #coded, data_time = QSGD_gpu.encode(d_p_new, enable_max = self.enable_max, level = self.qsgd_level)
-                    #tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
-                    
-                    #temp
-                    tensor_decoded = d_p_new
-
+                    coded, data_time = QSGD_gpu.encode(d_p_new, enable_max = self.enable_max, level = self.qsgd_level)
+                    tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
                     dist.all_reduce(tensor_decoded, group = 0)
                     tensor_decoded = tensor_decoded / dist.get_world_size()
                     if self.bidirection_compress:
                         if dist.get_rank() == 0:
-                            coded, data_time = QSGD_gpu.encode(tensor_decoded,self.enable_max)
+                            coded, data_time = QSGD_gpu.encode(tensor_decoded, enable_max = self.enable_max, level = self.qsgd_level)
                             tensor_decoded = QSGD_gpu.decode(coded, cuda = True)
                         else:
                             tensor_decoded = torch.zeros(tensor_decoded.size()).type_as(tensor_decoded)
@@ -411,3 +406,5 @@ class SGD_distribute(Optimizer):
                 p.data.add_(-group['lr'], p.grad.data)
 
         return loss
+
+

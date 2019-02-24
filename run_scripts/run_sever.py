@@ -9,12 +9,12 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-#'5':'ec2-34-221-38-127.us-west-2.compute.amazonaws.com',\
-#'6':'ec2-18-236-219-174.us-west-2.compute.amazonaws.com',\
-#'7':'ec2-54-149-187-90.us-west-2.compute.amazonaws.com',\
-'i-034074c3b66814c86':'ec2-52-11-11-115.us-west-2.compute.amazonaws.com',\
-'i-082b1124385c7381c':'ec2-34-222-222-232.us-west-2.compute.amazonaws.com',\
-'i-0b0d86786243fd150':'ec2-54-214-217-99.us-west-2.compute.amazonaws.com',\
+'fast_ai_base_1':'ec2-18-237-227-227.us-west-2.compute.amazonaws.com',\
+'i-02c4f3dff7162c822':'ec2-54-68-206-94.us-west-2.compute.amazonaws.com',\
+'i-033efead24193ac02':'ec2-54-201-53-132.us-west-2.compute.amazonaws.com',\
+#'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
+#'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
+#'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\
 #'i-0f05a98dfcb5de301':'ec2-34-220-194-215.us-west-2.compute.amazonaws.com',\
 #'i-0f527dbf350eeabbd':'ec2-35-165-67-21.us-west-2.compute.amazonaws.com',\
 #'fast_ai_9':'ec2-34-221-191-227.us-west-2.compute.amazonaws.com',\
@@ -65,28 +65,22 @@ def start_sever():
 
         sftp = paramiko.SFTPClient.from_transport(ssh.get_transport())
         #.sh file upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/run_scripts/3_workers_QSGD/train_script' + str(index + 1) + '.sh',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/run_scripts/3_workers/train_script' + str(index + 1) + '.sh',\
             '/home/ubuntu/train_script.sh')
 
         #benchmark_main.py upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/benchmark_main.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_main.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/benchmark_main.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/Imagefolder_train_val.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/Imagefolder_train_val.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Imagefolder_train_val.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/resnet.py',\
-            '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/resnet.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/QSGD_gpu.py',\
-            '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/QSGD_gpu.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/QSGD_optimizer.py',\
-            '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/QSGD_optimizer.py')
         #distributed_model upload
         #sftp.put('/Users/jonah/Desktop/signum/source code/imagenet-fast_jiawei/imagenet_nv/distributed_model.py',\
             #'/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/distributed_model.py')
         #Signum_SGD.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/Signum_optimizer.py',\
-            '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Signum_optimizer.py')
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/Signum_SGD.py',\
+            '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Signum_SGD.py')
         #compressor.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_QSGD/compressor.py',\
+        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/compressor.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/compressor.py')
 
         '''

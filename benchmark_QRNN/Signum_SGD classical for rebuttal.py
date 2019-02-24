@@ -1,5 +1,4 @@
 #coding=utf-8
-#suitable for multi-data_parallel and single worker
 import torch
 from torch.optim import Optimizer
 import torch.distributed as dist
@@ -214,7 +213,7 @@ class SGD_distribute(Optimizer):
                     self.bucketing_time.record()
 
 
-                    
+
                     #d_p_new = d_p.clone()
                     if self.all_reduce:
                         self.all_reduce_time.set()

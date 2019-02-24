@@ -20,9 +20,9 @@ server_list = {
 #'1':'ec2-54-189-180-185.us-west-2.compute.amazonaws.com',\
 #'2':'ec2-18-237-201-40.us-west-2.compute.amazonaws.com',\
 #'3':'ec2-54-149-119-211.us-west-2.compute.amazonaws.com'
-'5':'ec2-18-237-137-159.us-west-2.compute.amazonaws.com',\
-'6':'ec2-18-236-205-136.us-west-2.compute.amazonaws.com',\
-'7':'ec2-34-219-44-77.us-west-2.compute.amazonaws.com'
+'5':'ec2-54-212-161-111.us-west-2.compute.amazonaws.com',\
+#'6':'ec2-18-236-219-174.us-west-2.compute.amazonaws.com',\
+#'7':'ec2-54-149-187-90.us-west-2.compute.amazonaws.com'
 
 }
 
