@@ -4,7 +4,6 @@ from torch.optim import Optimizer
 import torch.distributed as dist
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors, \
     _take_tensors
-import compressor
 import time
 import os
 #Signum with majority vote
@@ -12,7 +11,22 @@ import os
 
 class SGD_distribute(Optimizer):
 
-    def __init__(self, params, lr=0.01, momentum=0.9, weight_decay = 0, compression_buffer = False, all_reduce = False ,local_rank = 0, gpus_per_machine = 1, **kwargs):
+    def __init__(self, params, args, **kwargs):
+
+        lr = args.lr
+        momentum = args.momentum
+        weight_decay = args.weight_decay
+        compression_buffer = args.compress
+        all_reduce = args.all_reduce
+        local_rank = args.local_rank
+        gpus_per_machine = args.gpus_per_machine
+
+        self.compression_buffer = compression_buffer
+        self.all_reduce = all_reduce
+        self.signum = args.signum
+
+        self.args = args
+
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if not 0.0 <= momentum:
@@ -25,14 +39,11 @@ class SGD_distribute(Optimizer):
 
         super(SGD_distribute, self).__init__(params, defaults)
 
-        #custom code
-        self.compression_buffer = compression_buffer
-        self.all_reduce = all_reduce
-
         self.MB = 1024 * 1024
         self.bucket_size = 100 * self.MB
 
         if self.compression_buffer:
+            import compressor
 
             self.compressor = compressor.compressor(using_cuda = True, local_rank = local_rank)
             self.local_rank = local_rank
@@ -80,7 +91,7 @@ class SGD_distribute(Optimizer):
 
     def step(self, closure=None):
 
-
+        args = self.args
 
         loss = None
         if closure is not None:
@@ -95,6 +106,7 @@ class SGD_distribute(Optimizer):
             for p in group['params']:
                 if p.grad is None:
                     continue
+
                 d_p = p.grad.data
                 if self.compression_buffer==False:
                     if weight_decay != 0:
@@ -116,8 +128,10 @@ class SGD_distribute(Optimizer):
                 d_p_new = _flatten_dense_tensors(dev_grads)
 
                 if self.all_reduce:
-                    dist.all_reduce(d_p_new, group = 0) #self.all_gpu
-                else:
+                    dist.all_reduce(d_p_new) #self.all_gpu, group = 0
+                    if self.signum:
+                        d_p_new = torch.sign(d_p_new)
+                elif self.signum:
                     if self.nodes > 1:
                         if self.compression_buffer:
                             d_p_new, tensor_size = self.compressor.compress(d_p_new)
@@ -148,13 +162,37 @@ class SGD_distribute(Optimizer):
 
                         if self.compression_buffer:
                             d_p_new = self.compressor.uncompress(d_p_new, tensor_size)
+                else:
+                    print('You can not run without signum or all_reduce')
 
                 #unflatten
                 dev_grads_new = _unflatten_dense_tensors(d_p_new,dev_grads)
                 for grad, reduced in zip(dev_grads, dev_grads_new):
                     grad.copy_(reduced)
             for p in group['params']:
-                if self.compression_buffer:
+                '''
+                LARC
+                This part of code was originally forked from (https://github.com/NVIDIA/apex/blob/master/apex/parallel/LARC.py)
+                ''' 
+                if args.larc_enable:
+                    trust_coefficient = args.larc_trust_coefficient
+                    clip = args.larc_clip
+                    eps = args.larc_eps
+                    param_norm = torch.norm(p.data)
+                    grad_norm = torch.norm(p.grad.data)
+                    if param_norm != 0 and grad_norm != 0:
+                        # calculate adaptive lr + weight decay
+                        adaptive_lr = trust_coefficient * (param_norm) / (grad_norm + param_norm * weight_decay + eps)
+
+                        # clip learning rate for LARC
+                        if clip:
+                            # calculation of adaptive_lr so that when multiplied by lr it equals `min(adaptive_lr, lr)`
+                            adaptive_lr = min(adaptive_lr/group['lr'], 1)
+
+                        p.grad.data *= adaptive_lr
+
+
+                if self.compression_buffer: #This part of code is temporary
                     if weight_decay != 0:
                         p.grad.data.add_(weight_decay, p.data)
                 p.data.add_(-group['lr'], p.grad.data)

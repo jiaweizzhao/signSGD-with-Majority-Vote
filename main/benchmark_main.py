@@ -45,35 +45,41 @@ def get_parser():
                         help='manual epoch number (useful on restarts)')
     parser.add_argument('-b', '--batch-size', default=256, type=int,
                         metavar='N', help='mini-batch size (default: 256)')
-    parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,
+    parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
-    parser.add_argument('--weight-decay', '--wd', default=1e-5, type=float,
+    parser.add_argument('--weight-decay', '--wd', default=0, type=float,
                         metavar='W', help='weight decay (default: 1e-4)')
     parser.add_argument('--print-freq', '-p', default=10, type=int,
                         metavar='N', help='print frequency (default: 10)')
+    parser.add_argument('--seed', default=778, type=int,
+                        help='seed for initialization')
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                         help='evaluate model on validation set')
     parser.add_argument('--sz',       default=224, type=int, help='Size of transformed image.')
     parser.add_argument('--decay-int', default=30, type=int, help='Decay LR by 10 every decay-int epochs')
-    parser.add_argument('--loss-scale', type=float, default=1,
-                        help='Loss scaling, positive power of 2 values can improve fp16 convergence.')
-    parser.add_argument('--prof', dest='prof', action='store_true', help='Only run a few iters for profiling.')
+    parser.add_argument('--warm-up', action='store_true', help='Start warm up at first 5 epochs.')
+    parser.add_argument('--prof', dest='prof', action='store_true', help='Only run a few iters for profiling and testing.')
     parser.add_argument('--dist-url', default='env://', type=str, #sync.file
                         help='url used to set up distributed training')
-    parser.add_argument('--dist-backend', default='gloo', type=str, help='distributed backend')
+    parser.add_argument('--dist_backend', default='gloo', type=str, help='distributed backend')
     parser.add_argument('--world-size', default=1, type=int)
     parser.add_argument('--rank', default=0, type=int)
-    parser.add_argument('--extra_epochs', default=0, type=int,
-                        help='epochs not change lr')
-    parser.add_argument('--compress', action='store_true', help='Run Signum optimizer.')
-    parser.add_argument('--all_reduce', action='store_true', help='Run Signum optimizer.')
-    parser.add_argument('--signum', action='store_true', help='Run Signum optimizer.')
-    parser.add_argument("--local_rank", type=int)
-    parser.add_argument('--seed', default=778, type=int,
-                        help='seed for initialization')
+    parser.add_argument('--all_reduce', action='store_true', help='Using all_reduce')
+    parser.add_argument('--signum', action='store_true', help='Using Signum')
+    parser.add_argument('--compress', action='store_true', help='Initiate compression for Signum')
+    parser.add_argument("--local_rank", default=0, type=int)
+    parser.add_argument("--gpus_per_machine", default=1, type=int)
+    parser.add_argument('--test_evaluate', action='store_true', help='Initiate test evaluation')
+
+    #LARC setting
+    parser.add_argument('--larc_enable', action='store_true', help='Enable the LARC')
+    parser.add_argument("--larc_trust_coefficient", default=0.02, type=float)
+    parser.add_argument("--larc_eps", default=1e-8, type=float)
+    parser.add_argument('--larc_clip', action='store_true', help='Enable the elip for LARC')
+
     return parser
 
 cudnn.benchmark = True
@@ -162,8 +168,6 @@ def get_loaders(traindir, valdir, use_val_sampler=False, min_scale=0.08, Data_au
 
 def main():
 
-    args.split_data = False
-
     args.distributed = True
 
     print("~~epoch\thours\ttop1Accuracy\n")
@@ -191,7 +195,7 @@ def main():
     global param_copy
     param_copy = list(model.parameters())
     for parameter in param_copy:
-        dist.broadcast(parameter.data, 0, group = 0)
+        dist.broadcast(parameter.data, 0) #group = 0
     if dist.get_rank() == 0:
         print('parameter sync finished')
 
@@ -199,7 +203,7 @@ def main():
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = Signum_SGD.SGD_distribute(param_copy, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, local_rank = args.local_rank, compression_buffer = args.compress, all_reduce = args.all_reduce)
+    optimizer = Signum_SGD.SGD_distribute(param_copy, args)
 
     best_prec1 = 0
 
@@ -218,11 +222,11 @@ def main():
     valdir = os.path.join(args.data, 'val')
     args.sz = 224
 
-    train_loader,val_loader,train_sampler = get_loaders(traindir, valdir, split_data = args.split_data, seed = args.seed)
+    train_loader,val_loader,train_sampler = get_loaders(traindir, valdir, split_data = not args.test_evaluate, seed = args.seed)
 
     if args.evaluate: return validate(val_loader, model, criterion, epoch, start_time)
 
-    for epoch in range(args.start_epoch, (args.epochs + args.extra_epochs)):
+    for epoch in range(args.start_epoch, args.epochs):
 
         adjust_learning_rate(optimizer, epoch)
 
@@ -336,7 +340,6 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
         top1.update(to_python_float(prec1), input.size(0))
         top5.update(to_python_float(prec5), input.size(0))
 
-        loss = loss*args.loss_scale
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -446,12 +449,12 @@ class AverageMeter(object):
         return self.avg
 
 def adjust_learning_rate(optimizer, epoch):
-    if epoch<5 : 
+    if epoch<5 and args.warm_up: 
         # warmup 5 epochs
         lr = args.lr/(5-epoch)
     else:
         """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-        lr = args.lr * (0.1 ** (epoch // 30))
+        lr = args.lr * (0.1 ** (epoch // args.decay_int))
     args.lr_present = lr
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr

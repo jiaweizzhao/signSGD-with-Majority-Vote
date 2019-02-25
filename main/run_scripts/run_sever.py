@@ -9,9 +9,9 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-18-237-227-227.us-west-2.compute.amazonaws.com',\
-'i-02c4f3dff7162c822':'ec2-54-68-206-94.us-west-2.compute.amazonaws.com',\
-'i-033efead24193ac02':'ec2-54-201-53-132.us-west-2.compute.amazonaws.com',\
+'fast_ai_base_1':'ec2-34-221-27-121.us-west-2.compute.amazonaws.com',\
+#'i-02c4f3dff7162c822':'ec2-54-68-206-94.us-west-2.compute.amazonaws.com',\
+#'i-033efead24193ac02':'ec2-54-201-53-132.us-west-2.compute.amazonaws.com',\
 #'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
 #'i-082b1124385c7381c':'ec2-54-201-147-254.us-west-2.compute.amazonaws.com',\
 #'i-0b0d86786243fd150':'ec2-34-211-169-239.us-west-2.compute.amazonaws.com',\
@@ -57,7 +57,7 @@ server_list = {
 
 def start_sever():
     for index, sever in enumerate(server_list):
-
+        
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(server_list[sever], 22, 'ubuntu',
@@ -65,22 +65,22 @@ def start_sever():
 
         sftp = paramiko.SFTPClient.from_transport(ssh.get_transport())
         #.sh file upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/run_scripts/3_workers/train_script' + str(index + 1) + '.sh',\
+        sftp.put('/Users/jonah/Desktop/Work/signum/source code/signSGD-with-Majority-Vote/main/run_scripts/1_workers/train_script' + str(index + 1) + '.sh',\
             '/home/ubuntu/train_script.sh')
 
         #benchmark_main.py upload
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/benchmark_main.py',\
+        sftp.put('/Users/jonah/Desktop/Work/signum/source code/signSGD-with-Majority-Vote/main/benchmark_main.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/benchmark_main.py')
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/Imagefolder_train_val.py',\
+        sftp.put('/Users/jonah/Desktop/Work/signum/source code/signSGD-with-Majority-Vote/main/Imagefolder_train_val.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Imagefolder_train_val.py')
         #distributed_model upload
         #sftp.put('/Users/jonah/Desktop/signum/source code/imagenet-fast_jiawei/imagenet_nv/distributed_model.py',\
             #'/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/distributed_model.py')
         #Signum_SGD.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/Signum_SGD.py',\
+        sftp.put('/Users/jonah/Desktop/Work/signum/source code/signSGD-with-Majority-Vote/main/Signum_SGD.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Signum_SGD.py')
         #compressor.py
-        sftp.put('/Users/jonah/Desktop/signum/source code/signSGD-with-Majority-Vote/compressor.py',\
+        sftp.put('/Users/jonah/Desktop/Work/signum/source code/signSGD-with-Majority-Vote/main/compressor.py',\
             '/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/compressor.py')
 
         '''
@@ -100,14 +100,15 @@ def start_sever():
             #'/home/ubuntu/imagenet-fast_jiawei/imagenet_nv/Imagefolder_train_val.py')
 
         #just for test
-        
+        '''
         if index == 0:
             continue
+        '''
         
         
         
         #first time screen need to use -S, then -r 
-        ssh.exec_command('sudo chmod -R 777 /home/ubuntu/train_script.sh;screen -s /home/ubuntu/train_script.sh -L -dmS test')
+        #ssh.exec_command('sudo chmod -R 777 /home/ubuntu/train_script.sh;screen -s /home/ubuntu/train_script.sh -L -dmS test')
 
 
 if __name__ == "__main__":
