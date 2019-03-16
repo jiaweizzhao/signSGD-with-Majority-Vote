@@ -11,7 +11,7 @@ import os
 
 class SGD_distribute(Optimizer):
 
-    def __init__(self, params, args, **kwargs):
+    def __init__(self, params, args, log_writer, **kwargs):
 
         lr = args.lr
         momentum = args.momentum
@@ -24,6 +24,7 @@ class SGD_distribute(Optimizer):
         self.compression_buffer = compression_buffer
         self.all_reduce = all_reduce
         self.signum = args.signum
+        self.log_writer = log_writer
 
         self.args = args
 
@@ -169,7 +170,14 @@ class SGD_distribute(Optimizer):
                 dev_grads_new = _unflatten_dense_tensors(d_p_new,dev_grads)
                 for grad, reduced in zip(dev_grads, dev_grads_new):
                     grad.copy_(reduced)
+            #LARC saving
+            self.layer_adaptive_lr = []
+            layer_index = 0
+            laryer_saving = [1,2,3,23,49,87] #conv1.weight(no bias), bn1.weight, layer1.1.conv1.weight, layer2.1.conv1.weight, layer3.1.conv1.weight, layer4.1.conv1.weight
+            ###
             for p in group['params']:
+                layer_index += 1
+                ###
                 '''
                 LARC
                 This part of code was originally forked from (https://github.com/NVIDIA/apex/blob/master/apex/parallel/LARC.py)
@@ -184,12 +192,20 @@ class SGD_distribute(Optimizer):
                         # calculate adaptive lr + weight decay
                         adaptive_lr = trust_coefficient * (param_norm) / (grad_norm + param_norm * weight_decay + eps)
 
+                        #add adaptive lr saving
+                        if layer_index in laryer_saving:
+                            self.layer_adaptive_lr.append(adaptive_lr)
+
                         # clip learning rate for LARC
                         if clip:
                             # calculation of adaptive_lr so that when multiplied by lr it equals `min(adaptive_lr, lr)`
                             adaptive_lr = min(adaptive_lr/group['lr'], 1)
 
+                        else:
+                            adaptive_lr = adaptive_lr/group['lr']
+
                         p.grad.data *= adaptive_lr
+                ###
 
 
                 if self.compression_buffer: #This part of code is temporary

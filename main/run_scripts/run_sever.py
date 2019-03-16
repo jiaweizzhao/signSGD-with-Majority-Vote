@@ -9,7 +9,7 @@ server_list = {
 #'2':'ec2-18-237-47-220.us-west-2.compute.amazonaws.com'
 #'3':'ec2-35-165-31-92.us-west-2.compute.amazonaws.com'
 #group1 + addtional
-'fast_ai_base_1':'ec2-34-221-27-121.us-west-2.compute.amazonaws.com',\
+'fast_ai_base_1':'ec2-54-202-218-98.us-west-2.compute.amazonaws.com',\
 #'i-02c4f3dff7162c822':'ec2-54-68-206-94.us-west-2.compute.amazonaws.com',\
 #'i-033efead24193ac02':'ec2-54-201-53-132.us-west-2.compute.amazonaws.com',\
 #'i-034074c3b66814c86':'ec2-34-222-104-174.us-west-2.compute.amazonaws.com',\
@@ -108,7 +108,7 @@ def start_sever():
         
         
         #first time screen need to use -S, then -r 
-        #ssh.exec_command('sudo chmod -R 777 /home/ubuntu/train_script.sh;screen -s /home/ubuntu/train_script.sh -L -dmS test')
+        ssh.exec_command('sudo chmod -R 777 /home/ubuntu/train_script.sh;screen -s /home/ubuntu/train_script.sh -L -dmS test')
 
 
 if __name__ == "__main__":

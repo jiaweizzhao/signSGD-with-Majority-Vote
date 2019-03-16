@@ -203,7 +203,7 @@ def main():
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = Signum_SGD.SGD_distribute(param_copy, args)
+    optimizer = Signum_SGD.SGD_distribute(param_copy, args, log_writer)
 
     best_prec1 = 0
 
@@ -359,7 +359,33 @@ def train(train_loader, model, criterion, optimizer, epoch, log_writer):
                   'Total Training Time {train_time:.3f}'.format(
                    epoch, i, len(train_loader), batch_time=batch_time,
                    data_time=data_time, loss=losses, top1=top1, top5=top5, train_time=train_record.get_time()))
-            train_record.set()             
+            train_record.set()
+
+    if log_writer:
+        log_writer.add_scalar('train_iter/top1', top1.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/top5', top5.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/loss', losses.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/batch_time', batch_time.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/data_time', data_time.get_avg(), iter_ptr)
+        log_writer.add_scalar('train_iter/learning_rate_schedule', args.lr_present, iter_ptr)
+
+        log_writer.add_scalar('train_epoch/top1', top1.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/top5', top5.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/loss', losses.get_avg(), epoch)
+        log_writer.add_scalar('train_epoch/learning_rate_schedule', args.lr_present, epoch)
+
+        log_writer.add_scalar('train_time/top1', top1.get_avg(), train_record.get_time())
+        log_writer.add_scalar('train_time/top5', top5.get_avg(), train_record.get_time())
+        log_writer.add_scalar('train_time/loss', losses.get_avg(), train_record.get_time())  
+
+        if args.larc_enable:
+            #add larc_adaptive_lr saving
+            laryer_saving_name = ['layer0.conv1.weight', 'layer0.bn1.weight', 'layer1.1.conv1.weight', \
+                                'layer2.1.conv1.weight', 'layer3.1.conv1.weight', 'layer4.1.conv1.weight'] #correspond to list laryer_saving in Signum_SGD.py
+            for index, layer_lr in enumerate(optimizer.layer_adaptive_lr):
+                log_writer.add_scalar('larc_layer_adaptive_lr/' + laryer_saving_name[index], layer_lr, epoch)
+
+
 
 def validate(val_loader, model, criterion, epoch, start_time, log_writer):
     batch_time = AverageMeter()
@@ -418,6 +444,19 @@ def validate(val_loader, model, criterion, epoch, start_time, log_writer):
     if dist.get_rank() == 0:
         print(f'~~{epoch}\t{float(time_diff.total_seconds() / 3600.0)}\t{top5.avg:.3f}\n')
         print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'.format(top1=top1, top5=top5)) 
+        if log_writer:
+            log_writer.add_scalar('test_iter/top1', top1.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/top5', top5.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/loss', losses.get_avg(), iter_ptr)
+            log_writer.add_scalar('test_iter/batch_time', batch_time.get_avg(), iter_ptr)
+
+            log_writer.add_scalar('test_epoch/top1', top1.get_avg(), epoch)
+            log_writer.add_scalar('test_epoch/top5', top5.get_avg(), epoch)
+            log_writer.add_scalar('test_epoch/loss', losses.get_avg(), epoch)
+
+            log_writer.add_scalar('test_time/top1', top1.get_avg(), train_record.get_time())
+            log_writer.add_scalar('test_time/top5', top5.get_avg(), train_record.get_time())
+            log_writer.add_scalar('test_time/loss', losses.get_avg(), train_record.get_time())  
 
     return top1.avg
 
