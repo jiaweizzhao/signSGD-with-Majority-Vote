@@ -1,2 +1,0 @@
-cd source_code_mirror
-sh train_script.sh

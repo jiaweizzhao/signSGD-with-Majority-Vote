@@ -1,1 +1,0 @@
-docker image build -t signum_docker ./signum_docker
